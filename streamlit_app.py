@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
-import base64
 from datetime import time, datetime
-from io import BytesIO
 import os
 import pytz  # Added pytz for timezone handling
 
@@ -75,19 +73,6 @@ def load_data(file_name, columns):
 def save_data(df, file_name):
     """Save the DataFrame to a CSV file."""
     df.to_csv(file_name, index=False)
-
-# Modified Excel export function with better error handling
-def to_excel(df):
-    try:
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False)
-            writer.save()  # Ensure the data is written to the BytesIO stream
-        output.seek(0)
-        return output.getvalue()
-    except Exception as e:
-        st.error(f"Error exporting to Excel: {str(e)}")
-        return None
 
 # Check if user is logged in
 if "logged_in" not in st.session_state:
@@ -163,15 +148,6 @@ else:
             edited_df = st.data_editor(st.session_state["news_data"])
             st.session_state["news_data"] = edited_df
             save_data(edited_df, NEWS_CSV)
-            
-            excel_data = to_excel(edited_df)
-            if excel_data is not None:
-                st.download_button(
-                    label="تحميل الأخبار كملف Excel",
-                    data=excel_data,
-                    file_name="news_data.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
 
     # Twitter News Tab
     with tabs[1]:
@@ -220,12 +196,3 @@ else:
             edited_tweet_df = st.data_editor(st.session_state["twitter_news_data"])
             st.session_state["twitter_news_data"] = edited_tweet_df
             save_data(edited_tweet_df, TWITTER_CSV)
-            
-            tweet_excel_data = to_excel(edited_tweet_df)
-            if tweet_excel_data is not None:
-                st.download_button(
-                    label="تحميل الأخبار كملف Excel",
-                    data=tweet_excel_data,
-                    file_name="twitter_news_data.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
