@@ -3,7 +3,6 @@ import pandas as pd
 import base64
 from datetime import time, datetime
 from io import BytesIO
-import os
 
 # Authentication dictionary for usernames and passwords
 AUTH_USERS = {
@@ -58,19 +57,6 @@ def logout():
     st.session_state["logged_in"] = False
     st.success("تم تسجيل الخروج")
 
-# Load CSV data
-def load_data(file_name, columns):
-    """Load data from a CSV file if it exists, otherwise return an empty DataFrame."""
-    if os.path.exists(file_name):
-        return pd.read_csv(file_name)
-    else:
-        return pd.DataFrame(columns=columns)
-
-# Save data to CSV
-def save_data(df, file_name):
-    """Save the DataFrame to a CSV file."""
-    df.to_csv(file_name, index=False)
-
 # Check if user is logged in
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
@@ -101,14 +87,11 @@ else:
             df.to_excel(writer, index=False)
         return output.getvalue()
 
-    # File paths for saving data
-    NEWS_CSV = "news_data.csv"
-    TWITTER_CSV = "twitter_news_data.csv"
-
     # Regular News Tab
     with tabs[0]:
-        # Load data from the CSV if it exists
-        st.session_state["news_data"] = load_data(NEWS_CSV, ["التاريخ", "الوقت", "نوع الخبر", "الخبر الرئيسي", "التصنيف", "المقدمة", "الرابط"])
+        # Initialize an empty DataFrame for regular news if not already created
+        if "news_data" not in st.session_state:
+            st.session_state["news_data"] = pd.DataFrame(columns=["التاريخ", "الوقت", "نوع الخبر", "الخبر الرئيسي", "التصنيف", "المقدمة", "الرابط"])
 
         col_left, col_right = st.columns([2, 1])
         with col_left:
@@ -143,14 +126,12 @@ else:
                 "الرابط": [news_url]
             })
             st.session_state["news_data"] = pd.concat([st.session_state["news_data"], new_entry], ignore_index=True)
-            save_data(st.session_state["news_data"], NEWS_CSV)  # Save to CSV
             st.success("تم إرسال الخبر بنجاح!")
 
         if not st.session_state["news_data"].empty:
             st.subheader("الأخبار العامة")
             edited_df = st.data_editor(st.session_state["news_data"])
             st.session_state["news_data"] = edited_df
-            save_data(edited_df, NEWS_CSV)  # Save edited data to CSV
             st.download_button(
                 label="تحميل الأخبار كملف Excel",
                 data=to_excel(edited_df),
@@ -160,9 +141,13 @@ else:
 
     # Twitter News Tab
     with tabs[1]:
-        st.session_state["twitter_news_data"] = load_data(TWITTER_CSV, ["المنصة", "التاريخ", "الوقت", "المنطقة", "التصنيف", "المحتوى", "التقييم", "الرابط"])
+        if "twitter_news_data" not in st.session_state:
+            st.session_state["twitter_news_data"] = pd.DataFrame(columns=["المنصة", "التاريخ", "الوقت", "المنطقة","التصنيف", "المحتوى", "التقييم", "الرابط"])
 
+        # Create two columns for splitting fields
         col_right, col_left = st.columns(2)
+
+        # Group the first four fields on the right
         with col_right:
             social_media = st.selectbox('المنصة', ['Twitter X', 'YouTube', 'TikTok', 'Snapchat', 'Instagram', 'facebook', 'Linkedin'])
             social_date = st.date_input("التاريخ", key="social_date")
@@ -172,17 +157,19 @@ else:
                 social_time = time(hour=current_time_2.hour, minute=current_time_2.minute, second=current_time_2.second)
             else:
                 social_time = get_selected_time(key_prefix="tweet")
-            st.write(f"الوقت المحدد: {social_time.strftime('%I:%M:%S %p')}")  
+            st.write(f"الوقت المحدد: {social_time.strftime('%I:%M:%S %p')}")  # Changed from news_time to tweet_time
             social_zone = st.selectbox("المنطقة", ['غير محدد', 'الرياض', 'مكة المكرمة', 'عسير', 'نجران', 'الباحة', 'تبوك', 'القصيم',
                                                     'جازان', 'المنطقة الشرقية', 'الجوف', 'حائل', 'الحدود الشمالية', 'المدينة المنورة'],
                                     key="social_zone")
 
+        # Group the remaining four fields on the left
         with col_left:
             social_content = st.text_area("المحتوى", key="social_content")
             social_class = st.selectbox('التصنيف', ["انقطاع التيار", "شكوى", "فواتير", "مطالبة"], key="social_class")
             social_stage = st.selectbox('التقييم', ["إيجابي", 'سلبي', 'محايد'])
             social_url = st.text_area("الرابط", key="social_url")
 
+        # Button for submission
         submit_social_button = st.button(label="ارسال")
 
         if submit_social_button:
@@ -197,17 +184,15 @@ else:
                 "الرابط": [social_url]
             })
             st.session_state["twitter_news_data"] = pd.concat([st.session_state["twitter_news_data"], new_tweet_entry], ignore_index=True)
-            save_data(st.session_state["twitter_news_data"], TWITTER_CSV)  # Save to CSV
-            st.success("تم إرسال الخبر الاجتماعي بنجاح!")
+            st.success("تم ارسال الخبر بنجاح!")
 
         if not st.session_state["twitter_news_data"].empty:
-            st.subheader("تحديثات تويتر")
-            edited_tweet_df = st.data_editor(st.session_state["twitter_news_data"])
-            st.session_state["twitter_news_data"] = edited_tweet_df
-            save_data(edited_tweet_df, TWITTER_CSV)  # Save edited data to CSV
+            st.subheader("الأخبار من التواصل الاجتماعي")
+            edited_twitter_df = st.data_editor(st.session_state["twitter_news_data"])
+            st.session_state["twitter_news_data"] = edited_twitter_df
             st.download_button(
-                label="تحميل بيانات تويتر كملف Excel",
-                data=to_excel(edited_tweet_df),
+                label="تحميل الأخبار كملف Excel",
+                data=to_excel(edited_twitter_df),
                 file_name="twitter_news_data.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
