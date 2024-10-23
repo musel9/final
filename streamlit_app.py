@@ -4,10 +4,6 @@ import base64
 from datetime import time, datetime
 from io import BytesIO
 import os
-import pytz  # Added pytz for timezone handling
-
-# Set your timezone (for example, Riyadh)
-TIMEZONE = pytz.timezone("Asia/Riyadh")
 
 # Authentication dictionary for usernames and passwords
 AUTH_USERS = {
@@ -20,8 +16,7 @@ AUTH_USERS = {
 }
 
 # List of energy types in Arabic
-type_of_energy = [
-    "الطاقة",
+type_of_energy = ["الطاقة",
     "الطاقة الشمسية", "الطاقة الرياحية", "الطاقة الكهربائية", "الطاقة النووية",
     "الطاقة الحرارية الأرضية", "الطاقة المائية", "الطاقة الكهروضوئية", "الطاقة الحيوية",
     "الطاقة الهيدروجينية", "الطاقة المدية", "الطاقة الحرارية", "الطاقة الكيميائية",
@@ -120,8 +115,7 @@ else:
             news_date = st.date_input("التاريخ")
             time_choice = st.selectbox("التوقيت", ["الآن", "اختر"], key="news_time_choice")
             if time_choice == 'الآن':
-                # Get current time in the specified timezone
-                current_time = datetime.now(TIMEZONE)
+                current_time = datetime.now()
                 news_time = time(hour=current_time.hour, minute=current_time.minute, second=current_time.second)
             else:
                 news_time = get_selected_time(key_prefix="news")
@@ -174,8 +168,7 @@ else:
             social_date = st.date_input("التاريخ", key="social_date")
             social_time_choice = st.selectbox("التوقيت", ["الآن", "اختر"], key="social_time_choice")
             if social_time_choice == 'الآن':
-                # Get current time in the specified timezone
-                current_time_2 = datetime.now(TIMEZONE)
+                current_time_2 = datetime.now()
                 social_time = time(hour=current_time_2.hour, minute=current_time_2.minute, second=current_time_2.second)
             else:
                 social_time = get_selected_time(key_prefix="tweet")
@@ -190,7 +183,7 @@ else:
             social_stage = st.selectbox('التقييم', ["إيجابي", 'سلبي', 'محايد'])
             social_url = st.text_area("الرابط", key="social_url")
 
-        submit_social_button = st.button(label="إرسال الخبر", key="social")
+        submit_social_button = st.button(label="ارسال")
 
         if submit_social_button:
             new_tweet_entry = pd.DataFrame({
@@ -205,16 +198,16 @@ else:
             })
             st.session_state["twitter_news_data"] = pd.concat([st.session_state["twitter_news_data"], new_tweet_entry], ignore_index=True)
             save_data(st.session_state["twitter_news_data"], TWITTER_CSV)  # Save to CSV
-            st.success("تم إرسال الخبر بنجاح!")
+            st.success("تم إرسال الخبر الاجتماعي بنجاح!")
 
         if not st.session_state["twitter_news_data"].empty:
-            st.subheader("أخبار التواصل الاجتماعي")
-            edited_df = st.data_editor(st.session_state["twitter_news_data"])
-            st.session_state["twitter_news_data"] = edited_df
-            save_data(edited_df, TWITTER_CSV)  # Save edited data to CSV
+            st.subheader("تحديثات تويتر")
+            edited_tweet_df = st.data_editor(st.session_state["twitter_news_data"])
+            st.session_state["twitter_news_data"] = edited_tweet_df
+            save_data(edited_tweet_df, TWITTER_CSV)  # Save edited data to CSV
             st.download_button(
-                label="تحميل الأخبار كملف Excel",
-                data=to_excel(edited_df),
+                label="تحميل بيانات تويتر كملف Excel",
+                data=to_excel(edited_tweet_df),
                 file_name="twitter_news_data.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
