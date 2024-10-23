@@ -76,8 +76,8 @@ def save_data(df, file_name):
     """Save the DataFrame to a CSV file."""
     df.to_csv(file_name, index=False)
 
-# Modified Excel export function for saving to specific filename 'social_news_data.xlsx'
-def to_excel(df, filename):
+# Modified Excel export function with better error handling
+def to_excel(df):
     try:
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
@@ -164,12 +164,12 @@ else:
             st.session_state["news_data"] = edited_df
             save_data(edited_df, NEWS_CSV)
             
-            excel_data = to_excel(edited_df, 'social_news_data.xlsx')
+            excel_data = to_excel(edited_df)
             if excel_data is not None:
                 st.download_button(
                     label="تحميل الأخبار كملف Excel",
                     data=excel_data,
-                    file_name="social_news_data.xlsx",
+                    file_name="news_data.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
@@ -216,16 +216,16 @@ else:
             st.success("تم إرسال الخبر بنجاح!")
 
         if not st.session_state["twitter_news_data"].empty:
-            st.subheader("أخبار التواصل الاجتماعي")
-            edited_twitter_df = st.data_editor(st.session_state["twitter_news_data"])
-            st.session_state["twitter_news_data"] = edited_twitter_df
-            save_data(edited_twitter_df, TWITTER_CSV)
+            st.subheader("رصد التواصل الإجتماعي")
+            edited_tweet_df = st.data_editor(st.session_state["twitter_news_data"])
+            st.session_state["twitter_news_data"] = edited_tweet_df
+            save_data(edited_tweet_df, TWITTER_CSV)
             
-            twitter_excel_data = to_excel(edited_twitter_df, 'social_news_data.xlsx')
-            if twitter_excel_data is not None:
+            tweet_excel_data = to_excel(edited_tweet_df)
+            if tweet_excel_data is not None:
                 st.download_button(
                     label="تحميل الأخبار كملف Excel",
-                    data=twitter_excel_data,
-                    file_name="social_news_data.xlsx",
+                    data=tweet_excel_data,
+                    file_name="twitter_news_data.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
