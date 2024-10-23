@@ -76,19 +76,6 @@ def save_data(df, file_name):
     """Save the DataFrame to a CSV file."""
     df.to_csv(file_name, index=False)
 
-# Modified Excel export function with better error handling
-def to_excel(df):
-    try:
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False)
-            writer.save()  # Ensure the data is written to the BytesIO stream
-        output.seek(0)
-        return output.getvalue()
-    except Exception as e:
-        st.error(f"Error exporting to Excel: {str(e)}")
-        return None
-
 # Check if user is logged in
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
@@ -113,6 +100,12 @@ else:
             minute = st.selectbox("الدقيقة", list(range(0, 60)), index=0, key=f"{key_prefix}_minute")
         return time(hour=hour, minute=minute)
 
+    def to_excel(df):
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False)
+        return output.getvalue()
+
     # File paths for saving data
     NEWS_CSV = "news_data.csv"
     TWITTER_CSV = "twitter_news_data.csv"
@@ -127,6 +120,7 @@ else:
             news_date = st.date_input("التاريخ")
             time_choice = st.selectbox("التوقيت", ["الآن", "اختر"], key="news_time_choice")
             if time_choice == 'الآن':
+                # Get current time in the specified timezone
                 current_time = datetime.now(TIMEZONE)
                 news_time = time(hour=current_time.hour, minute=current_time.minute, second=current_time.second)
             else:
@@ -155,23 +149,20 @@ else:
                 "الرابط": [news_url]
             })
             st.session_state["news_data"] = pd.concat([st.session_state["news_data"], new_entry], ignore_index=True)
-            save_data(st.session_state["news_data"], NEWS_CSV)
+            save_data(st.session_state["news_data"], NEWS_CSV)  # Save to CSV
             st.success("تم إرسال الخبر بنجاح!")
 
         if not st.session_state["news_data"].empty:
             st.subheader("الأخبار العامة")
             edited_df = st.data_editor(st.session_state["news_data"])
             st.session_state["news_data"] = edited_df
-            save_data(edited_df, NEWS_CSV)
-            
-            excel_data = to_excel(edited_df)
-            if excel_data is not None:
-                st.download_button(
-                    label="تحميل الأخبار كملف Excel",
-                    data=excel_data,
-                    file_name="news_data.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+            save_data(edited_df, NEWS_CSV)  # Save edited data to CSV
+            st.download_button(
+                label="تحميل الأخبار كملف Excel",
+                data=to_excel(edited_df),
+                file_name="news_data.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
     # Twitter News Tab
     with tabs[1]:
@@ -183,6 +174,7 @@ else:
             social_date = st.date_input("التاريخ", key="social_date")
             social_time_choice = st.selectbox("التوقيت", ["الآن", "اختر"], key="social_time_choice")
             if social_time_choice == 'الآن':
+                # Get current time in the specified timezone
                 current_time_2 = datetime.now(TIMEZONE)
                 social_time = time(hour=current_time_2.hour, minute=current_time_2.minute, second=current_time_2.second)
             else:
@@ -212,20 +204,17 @@ else:
                 "الرابط": [social_url]
             })
             st.session_state["twitter_news_data"] = pd.concat([st.session_state["twitter_news_data"], new_tweet_entry], ignore_index=True)
-            save_data(st.session_state["twitter_news_data"], TWITTER_CSV)
+            save_data(st.session_state["twitter_news_data"], TWITTER_CSV)  # Save to CSV
             st.success("تم إرسال الخبر بنجاح!")
 
         if not st.session_state["twitter_news_data"].empty:
-            st.subheader("رصد التواصل الإجتماعي")
-            edited_tweet_df = st.data_editor(st.session_state["twitter_news_data"])
-            st.session_state["twitter_news_data"] = edited_tweet_df
-            save_data(edited_tweet_df, TWITTER_CSV)
-            
-            tweet_excel_data = to_excel(edited_tweet_df)
-            if tweet_excel_data is not None:
-                st.download_button(
-                    label="تحميل الأخبار كملف Excel",
-                    data=tweet_excel_data,
-                    file_name="twitter_news_data.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+            st.subheader("أخبار التواصل الاجتماعي")
+            edited_df = st.data_editor(st.session_state["twitter_news_data"])
+            st.session_state["twitter_news_data"] = edited_df
+            save_data(edited_df, TWITTER_CSV)  # Save edited data to CSV
+            st.download_button(
+                label="تحميل الأخبار كملف Excel",
+                data=to_excel(edited_df),
+                file_name="twitter_news_data.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
