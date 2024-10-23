@@ -82,8 +82,7 @@ def to_excel(df):
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df.to_excel(writer, index=False)
-            # Make sure to close the writer
-            writer.close()
+            writer.save()  # Ensure the data is written to the BytesIO stream
         output.seek(0)
         return output.getvalue()
     except Exception as e:
@@ -217,16 +216,16 @@ else:
             st.success("تم إرسال الخبر بنجاح!")
 
         if not st.session_state["twitter_news_data"].empty:
-            st.subheader("أخبار التواصل الاجتماعي")
-            edited_df = st.data_editor(st.session_state["twitter_news_data"])
-            st.session_state["twitter_news_data"] = edited_df
-            save_data(edited_df, TWITTER_CSV)
+            st.subheader("رصد التواصل الإجتماعي")
+            edited_tweet_df = st.data_editor(st.session_state["twitter_news_data"])
+            st.session_state["twitter_news_data"] = edited_tweet_df
+            save_data(edited_tweet_df, TWITTER_CSV)
             
-            excel_data = to_excel(edited_df)
-            if excel_data is not None:
+            tweet_excel_data = to_excel(edited_tweet_df)
+            if tweet_excel_data is not None:
                 st.download_button(
                     label="تحميل الأخبار كملف Excel",
-                    data=excel_data,
+                    data=tweet_excel_data,
                     file_name="twitter_news_data.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
