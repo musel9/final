@@ -170,7 +170,7 @@ else:
 
         with col_left:
             social_content = st.text_area("المحتوى", key="social_content")
-            social_class = st.selectbox('التصنيف', ["انقطاع التيار", "شكوى", "فواتير", "مطالبة"], key="social_class")
+            social_class = st.selectbox('التصنيف', ["خبر", "انقطاع التيار", "شكوى", "فواتير", "مطالبة"], key="social_class")
             social_stage = st.selectbox('التقييم', ["إيجابي", 'سلبي', 'محايد'])
             social_url = st.text_area("الرابط", key="social_url")
 
