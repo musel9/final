@@ -173,6 +173,6 @@ else:
 
         if not st.session_state["twitter_news_data"].empty:
             st.subheader("رصد التواصل الإجتماعي")
-            edited_tweet_df = st.data_editor(st.session_state["twitter_news_data"], num_rows='dynamic')
+            edited_tweet_df = st.data_editor(st.session_state["twitter_news_data"])
             st.session_state["twitter_news_data"] = edited_tweet_df
             save_data(edited_tweet_df, TWITTER_CSV)
